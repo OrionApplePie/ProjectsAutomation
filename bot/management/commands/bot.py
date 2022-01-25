@@ -3,15 +3,20 @@ import os
 from enum import Enum, auto
 
 from django.core.management.base import BaseCommand
-from telegram import (Bot, InlineKeyboardButton, InlineKeyboardMarkup,
-                      ParseMode, ReplyKeyboardRemove, Update)
-from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler,
-                          Updater)
+from telegram import (
+    Bot,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ParseMode,
+    ReplyKeyboardRemove,
+    Update,
+)
+from telegram.ext import CallbackContext, CommandHandler, ConversationHandler, Updater
 from telegram.utils.request import Request
 
 import bot.management.commands._pm_conversation as pc
 import bot.management.commands._student_conversation as sc
-from bot.models import ProductManager, Student, TimeSlot
+from bot.models import Participant, TimeSlot
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
@@ -55,8 +60,8 @@ def start(update: Update, context: CallbackContext):
     )
     logger.info(f"User {user.first_name} :: {user.id} started the conversation.")
 
-    find_pm = ProductManager.objects.filter(tg_username=user.username)
-    student_pm = Student.objects.filter(tg_username__contains=user.username)
+    find_pm = Participant.objects.filter(tg_username=user.username)
+    student_pm = Participant.objects.filter(tg_username__contains=user.username)
     if find_pm or student_pm:
         if find_pm:
             find_pm[0].tg_id = user.id
@@ -95,12 +100,12 @@ def send_first_step_pm(update: Update, context: CallbackContext) -> States:
 
 def student_project(user_id):
     try:
-        student = Student.objects.get(tg_id=user_id)
+        student = Participant.objects.get(tg_id=user_id)
         timeslots = student.timeslots.all()
         for slot in timeslots:
             if slot.status == TimeSlot.BUSY:
                 return slot
-    except Student.DoesNotExist:
+    except Participant.DoesNotExist:
         return None
 
 

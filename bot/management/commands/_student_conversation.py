@@ -4,10 +4,9 @@ from datetime import timedelta
 from enum import Enum, auto
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import (CallbackContext, CallbackQueryHandler,
-                          ConversationHandler)
+from telegram.ext import CallbackContext, CallbackQueryHandler, ConversationHandler
 
-from bot.models import Student, TimeSlot
+from bot.models import Participant, TimeSlot
 from bot.utils.timeslots_utils import CALL_TIME_MINUTES, make_timeslots
 
 logger = logging.getLogger("student")
@@ -79,11 +78,11 @@ def select_time(update: Update, context: CallbackContext):
     user_id = update.callback_query.from_user.id
     student_time = []
     try:
-        student = Student.objects.get(tg_id=user_id)
+        student = Participant.objects.get(tg_id=user_id)
         logger.info(student)
         student_slots = student.timeslots.values("time_slot").distinct()
         student_time = [slot["time_slot"].strftime("%H:%M") for slot in student_slots]
-    except Student.DoesNotExist:
+    except Participant.DoesNotExist:
         pass
 
     empty_time = [slot["time_slot"].strftime("%H:%M") for slot in empty_slots]
@@ -160,7 +159,7 @@ def collect_time(context: CallbackContext):
 
 
 def clear_time(user_id):
-    student = Student.objects.get(tg_id=user_id)
+    student = Participant.objects.get(tg_id=user_id)
     student.timeslots.all().delete()
 
 
