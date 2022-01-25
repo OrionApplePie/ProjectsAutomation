@@ -8,5 +8,13 @@
     {% csrf_token %}
     <input type="submit" value="Отменить распредедение" />
 </form>
+<form action="notify_teams/" method="POST">
+    {% csrf_token %}
+    <input type="submit" value="Оповестить сформированные команды" />
+</form>
+<form action="notify_free_students/" method="POST">
+    {% csrf_token %}
+    <input type="submit" value="Оповестить нераспределенных учеников" />
+</form>
 {{ block.super }}
 {% endblock %}

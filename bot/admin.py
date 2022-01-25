@@ -3,7 +3,13 @@ from django.http import HttpResponseRedirect
 from django.urls import re_path
 
 from .models import Constraint, Participant, Project, TeamProject, TimeSlot
-from .utils.timeslots_utils import cancel_distribution, make_teams
+from .utils.timeslots_utils import (
+    cancel_distribution,
+    make_teams,
+    get_teams,
+    get_unallocated_students,
+)
+from .utils.notification_utils import notify_free_students, notify_teams
 
 
 class TimeSlotInline(admin.TabularInline):
@@ -59,6 +65,16 @@ class TimeSlotAdmin(admin.ModelAdmin):
                 self.process_cancel_distribution_students,
                 name="process_cancel_distribution_students",
             ),
+            re_path(
+                "^notify_teams/$",
+                self.process_notify_teams,
+                name="process_notify_teams",
+            ),
+            re_path(
+                "^notify_free_students/$",
+                self.process_notify_free_students,
+                name="process_notify_free_students",
+            ),
         ]
         return custom_urls + urls
 
@@ -66,12 +82,31 @@ class TimeSlotAdmin(admin.ModelAdmin):
         result_message = make_teams()
         # TODO: использовать messages и level
         self.message_user(request, result_message)
+
+        self.process_notify_teams(request)
+        self.process_notify_free_students(request)
+
         return HttpResponseRedirect("../")
 
     def process_cancel_distribution_students(self, request):
         result_message = cancel_distribution()
         # TODO: использовать messages и level
         self.message_user(request, result_message)
+
+        return HttpResponseRedirect("../")
+
+    def process_notify_teams(self, request):
+        # TODO: использовать messages и level
+        notify_teams(get_teams())
+        self.message_user(request, "Команды и ПМы оповещены.")
+
+        return HttpResponseRedirect("../")
+
+    def process_notify_free_students(self, request):
+        # TODO: использовать messages и level
+        notify_free_students(get_unallocated_students())
+        self.message_user(request, "Нераспределенные ученики оповещены.")
+
         return HttpResponseRedirect("../")
 
 

@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from random import choice
 from typing import List
 
-from bot.management.commands.notificator import notify_free_students, notify_teams
 from bot.models import Participant, Project, TeamProject, TimeSlot
 
 MAX_TEAM_MEMBERS = 3
@@ -84,8 +83,6 @@ def make_teams():
                 pm_teams_count += 1
                 break
 
-    notify_teams(get_teams())
-    notify_free_students(get_unallocated_students())
     return "Распределение успешно"
 
 
