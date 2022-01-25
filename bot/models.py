@@ -4,6 +4,26 @@ from django.db import models
 class Participant(models.Model):
     """Участник проекта."""
 
+    STUDENT = "ST"
+    PRODUCT_MANAGER = "PM"
+
+    PARTICIPANT_ROLES_CHOICES = (
+        (STUDENT, "Ученик"),
+        (PRODUCT_MANAGER, "PM"),
+    )
+
+    BEGINNER = "BG"
+    BEGINNER_PLUS = "BG+"
+    JUNIOR = "JR"
+    NOT_AVAIBLE = "N/A"
+
+    STUDENT_LEVEL_CHOICES = (
+        (BEGINNER, "Новичок"),
+        (BEGINNER_PLUS, "Новичок+"),
+        (JUNIOR, "Джуниор"),
+        (NOT_AVAIBLE, "Не применимо"),
+    )
+
     tg_id = models.PositiveIntegerField(
         verbose_name="Telegram id",
         unique=True,
@@ -29,29 +49,12 @@ class Participant(models.Model):
         blank=False,
         null=False,
     )
-    STUDENT = "ST"
-    PRODUCT_MANAGER = "PM"
-    PARTICIPANT_ROLES_CHOICES = (
-        (STUDENT, "Ученик"),
-        (PRODUCT_MANAGER, "PM"),
-    )
     role = models.CharField(
         verbose_name="Роль",
         max_length=3,
         choices=PARTICIPANT_ROLES_CHOICES,
         default=STUDENT,
     )
-
-    BEGINNER = "BG"
-    BEGINNER_PLUS = "BG+"
-    JUNIOR = "JR"
-    NOT_AVAIBLE = "N/A"
-    STUDENT_LEVEL_CHOICES = [
-        (BEGINNER, "Новичок"),
-        (BEGINNER_PLUS, "Новичок+"),
-        (JUNIOR, "Джуниор"),
-        (NOT_AVAIBLE, "Не применимо"),
-    ]
     level = models.CharField(
         verbose_name="Уровень ученика",
         blank=False,
@@ -60,7 +63,6 @@ class Participant(models.Model):
         choices=STUDENT_LEVEL_CHOICES,
         default=NOT_AVAIBLE,
     )
-
     is_far_east = models.BooleanField(
         verbose_name="Из ДВ?",
         default=False,
@@ -76,11 +78,11 @@ class Participant(models.Model):
 
     class Meta:
         verbose_name = "Участник проекта"
-        verbose_name_plural = "Участник проекта"
+        verbose_name_plural = "Участники проектов"
 
 
 class TimeSlot(models.Model):
-    """Слот времени. Время, участник и проект уникальны."""
+    """Слот времени. Время, участник и проект задают уникальность."""
 
     time_slot = models.TimeField(
         verbose_name="Время начала созвона",
@@ -142,7 +144,7 @@ class Project(models.Model):
 
     class Meta:
         verbose_name = "Типовой проект"
-        verbose_name_plural = "Типовой проект"
+        verbose_name_plural = "Типовые проекты"
 
 
 class TeamProject(models.Model):
@@ -191,8 +193,17 @@ class TeamProject(models.Model):
 
 
 class Constraint(models.Model):
-    """Ограничения для пар участников,
-    которые должны или не должны попасть в одну команду."""
+    """Ограничения для пар участников, которые должны
+    или не должны попасть в одну команду."""
+
+    TOGHEDER = "TOG"
+    SEPARATELY = "SEP"
+    NOT_DEFINED = "ND"
+
+    CONSTRAINT_TYPES_CHOICES = (
+        (TOGHEDER, "Должны попасть на один проект"),
+        (SEPARATELY, "Не должны попасть на один проект"),
+    )
 
     first = models.ForeignKey(
         verbose_name="Первый участник",
@@ -205,13 +216,6 @@ class Constraint(models.Model):
         related_name="seconds",
         to="Participant",
         on_delete=models.CASCADE,
-    )
-    TOGHEDER = "TOG"
-    SEPARATELY = "SEP"
-    NOT_DEFINED = "ND"
-    CONSTRAINT_TYPES_CHOICES = (
-        (TOGHEDER, "Должны попасть на один проект"),
-        (SEPARATELY, "Не должны попасть на один проект"),
     )
     type = models.CharField(
         verbose_name="Тип ограничения",
