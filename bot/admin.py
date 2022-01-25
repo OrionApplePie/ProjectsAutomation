@@ -27,6 +27,8 @@ class ParticipantAdmin(admin.ModelAdmin):
     )
     list_filter = list_display
 
+    readonly_fields = ("tg_id",)
+
     inlines = [
         TimeSlotInline,
     ]

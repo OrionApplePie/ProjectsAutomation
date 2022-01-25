@@ -23,7 +23,12 @@ class Participant(models.Model):
         (JUNIOR, "Джуниор"),
         (NOT_AVAIBLE, "Не применимо"),
     )
-
+    name = models.CharField(
+        verbose_name="Имя (и фамилия)",
+        max_length=32,
+        blank=False,
+        null=False,
+    )
     tg_id = models.PositiveIntegerField(
         verbose_name="Telegram id",
         unique=True,
@@ -42,12 +47,6 @@ class Participant(models.Model):
         max_length=32,
         blank=True,
         null=True,
-    )
-    name = models.CharField(
-        verbose_name="Имя и фамилия",
-        max_length=32,
-        blank=False,
-        null=False,
     )
     role = models.CharField(
         verbose_name="Роль",
