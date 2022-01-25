@@ -57,11 +57,14 @@ def notify_everybody():
                     f"Созвон в: *{call_time}*"
                 )
                 logger.error(f"{user_id=} :: {text=}")
-                bot.send_message(
-                    chat_id=user_id,
-                    text=escape_characters(text),
-                    parse_mode=ParseMode.MARKDOWN_V2,
-                )
+                try:
+                    bot.send_message(
+                        chat_id=user_id,
+                        text=escape_characters(text),
+                        parse_mode=ParseMode.MARKDOWN_V2,
+                    )
+                except:
+                    pass
         for student in team:
             if student.tg_id:
                 my_team = team.copy()
@@ -75,11 +78,14 @@ def notify_everybody():
                     f"Созвон в: *{call_time}*"
                 )
                 logger.info(f"{user_id=} :: {text=}")
-                bot.send_message(
-                    chat_id=user_id,
-                    text=escape_characters(text),
-                    parse_mode=ParseMode.MARKDOWN_V2,
-                )
+                try:
+                    bot.send_message(
+                        chat_id=user_id,
+                        text=escape_characters(text),
+                        parse_mode=ParseMode.MARKDOWN_V2,
+                    )
+                except:
+                    pass
 
 
 def notify_free_students(free_students):
@@ -102,9 +108,12 @@ def notify_free_students(free_students):
                 f"Если какой-то из них устраивает добавьте его в список возможны /start\n"
                 f"Спасибо"
             )
-            bot.send_message(
-                chat_id=user_id,
-                text=escape_characters(text),
-                parse_mode=ParseMode.MARKDOWN_V2,
-            )
+            try:
+                bot.send_message(
+                    chat_id=user_id,
+                    text=escape_characters(text),
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                )
+            except:
+                pass
             logger.info(student)
