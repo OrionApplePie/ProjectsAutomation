@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import re_path
 
-from .models import Participant, Project, TeamProject, TimeSlot
+from .models import Constraint, Participant, Project, TeamProject, TimeSlot
 from .utils.timeslots_utils import cancel_distribution, make_teams
 
 
@@ -82,4 +82,9 @@ class TeamProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Constraint)
+class ConstraintAdmin(admin.ModelAdmin):
     pass

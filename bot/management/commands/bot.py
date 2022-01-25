@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 from enum import Enum, auto
 
 from django.core.management.base import BaseCommand
@@ -16,7 +17,7 @@ from telegram.utils.request import Request
 
 import bot.management.commands._pm_conversation as pc
 import bot.management.commands._student_conversation as sc
-from bot.models import Participant, TimeSlot
+from bot.models import Participant
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
@@ -58,28 +59,34 @@ def start(update: Update, context: CallbackContext):
     update.message.reply_text(
         f"Привет, {user.full_name if user.full_name else user.username}"
     )
-    logger.info(f"User {user.first_name} :: {user.id} started the conversation.")
-
-    find_pm = Participant.objects.filter(tg_username=user.username)
-    student_pm = Participant.objects.filter(tg_username__contains=user.username)
-    if find_pm or student_pm:
-        if find_pm:
-            find_pm[0].tg_id = user.id
-            find_pm[0].save()
-
-            return send_first_step_pm(update, context)
-        else:
-            student_pm[0].tg_id = user.id
-            student_pm[0].save()
-            return send_first_step_student(update, context)
-    else:
+    logger.info(
+        f"User {user.id} :: {user.username} :: {user.first_name} started the conversation."
+    )
+    try:
+        participant = Participant.objects.get(tg_username__contains=user.username)
+    except Participant.DoesNotExist:
         update.effective_user.send_message(
             text="Простите, но Вас нет в наших списках"
             ", обратитесь к менторам Devman.",
             reply_markup=ReplyKeyboardRemove(),
         )
-
         return ConversationHandler.END
+
+    except Participant.MultipleObjectsReturned:
+        update.effective_user.send_message(
+            text="Найдено более одного пользователя в списках" ", обратитесь в Devman.",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return ConversationHandler.END
+
+    participant.tg_id = user.id
+    # participant.full_name = user.full_name
+    participant.save()
+
+    if participant.role == Participant.PRODUCT_MANAGER:
+        return send_first_step_pm(update, context)
+    if participant.role == Participant.STUDENT:
+        return send_first_step_student(update, context)
 
 
 def send_first_step_pm(update: Update, context: CallbackContext) -> States:
@@ -101,10 +108,10 @@ def send_first_step_pm(update: Update, context: CallbackContext) -> States:
 def student_project(user_id):
     try:
         student = Participant.objects.get(tg_id=user_id)
-        timeslots = student.timeslots.all()
-        for slot in timeslots:
-            if slot.status == TimeSlot.BUSY:
-                return slot
+        student.timeslots.filter(
+            team_project__isnull=False,
+            team_project__date_start__gte=datetime.now(),
+        ).first()
     except Participant.DoesNotExist:
         return None
 

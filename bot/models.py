@@ -13,6 +13,7 @@ class Participant(models.Model):
     tg_username = models.CharField(
         verbose_name="Ник в Telegram",
         max_length=32,
+        help_text="без символа @",
         blank=False,
         null=False,
     )
@@ -70,9 +71,8 @@ class Participant(models.Model):
     def __str__(self):
         levels = dict(self.STUDENT_LEVEL_CHOICES)
         roles = dict(self.PARTICIPANT_ROLES_CHOICES)
-        if self.level:
-            lvl = levels[self.level]
-        return f"{roles[self.role]}: {self.name} ({self.tg_username})"
+        lvl = f" / {levels[self.level]}" if self.role == self.STUDENT else ""
+        return f"{roles[self.role]}{lvl}: {self.name} (@{self.tg_username})"
 
     class Meta:
         verbose_name = "Участник проекта"
@@ -190,28 +190,42 @@ class TeamProject(models.Model):
         verbose_name_plural = "Проекты команд"
 
 
-class PriorityStudents(models.Model):
-    """Пары студентов, которые должны попасть в одну команду."""
+class Constraint(models.Model):
+    """Ограничения для пар участников,
+    которые должны или не должны попасть в одну команду."""
 
-    student_1 = models.ForeignKey(
-        verbose_name="Ученик 1",
-        related_name="pairs_1",
-        to="Student",
+    first = models.ForeignKey(
+        verbose_name="Первый участник",
+        related_name="firsts",
+        to="Participant",
         on_delete=models.CASCADE,
     )
-    student_2 = models.ForeignKey(
-        verbose_name="Ученик 2",
-        related_name="pairs_2",
-        to="Student",
+    second = models.ForeignKey(
+        verbose_name="Второй участник",
+        related_name="seconds",
+        to="Participant",
         on_delete=models.CASCADE,
+    )
+    TOGHEDER = "TOG"
+    SEPARATELY = "SEP"
+    NOT_DEFINED = "ND"
+    CONSTRAINT_TYPES_CHOICES = (
+        (TOGHEDER, "Должны попасть на один проект"),
+        (SEPARATELY, "Не должны попасть на один проект"),
+    )
+    type = models.CharField(
+        verbose_name="Тип ограничения",
+        choices=CONSTRAINT_TYPES_CHOICES,
+        default=NOT_DEFINED,
+        max_length=3,
+        null=False,
+        blank=False,
     )
 
     def __str__(self):
-        return (
-            f"{self.student_1.name} / "
-            f"{self.student_2.name}"
-        )
+        types_dict = dict(self.CONSTRAINT_TYPES_CHOICES)
+        return f"{self.first.name} и {self.second.name}: {types_dict[self.type]}"
 
     class Meta:
-        verbose_name = "Парный Студент"
-        verbose_name_plural = "Парные Студенты"
+        verbose_name = "Ограничение на пары"
+        verbose_name_plural = "Ограничения на пары"

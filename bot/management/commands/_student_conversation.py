@@ -70,7 +70,8 @@ def keyboard_generator(context, keys=None):
 def select_time(update: Update, context: CallbackContext):
     empty_slots = (
         TimeSlot.objects.filter(
-            product_manager__isnull=False, student__isnull=True, status=TimeSlot.FREE
+            participant__role=Participant.PRODUCT_MANAGER,
+            team_project__isnull=True,
         )
         .values("time_slot")
         .distinct()

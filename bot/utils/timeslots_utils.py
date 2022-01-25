@@ -1,11 +1,9 @@
-from datetime import date, datetime, timedelta
 import logging
 from datetime import datetime, timedelta
 from random import choice
 from typing import List
 
-from bot.management.commands.notificator import notify_everybody, notify_free_students
-from bot.models import Project, TeamProject, TimeSlot
+from bot.management.commands.notificator import notify_free_students, notify_teams
 from bot.models import Participant, Project, TeamProject, TimeSlot
 
 MAX_TEAM_MEMBERS = 3
@@ -62,7 +60,7 @@ def make_teams():
                     participant__role=Participant.STUDENT,
                     participant__level=level,
                     team_project=None,
-                ).filter(participant__in=get_unallocated_students_optimized())
+                ).filter(participant__in=get_unallocated_students())
 
                 if free_students_timeslots.count() < MAX_TEAM_MEMBERS:
                     continue
@@ -86,7 +84,7 @@ def make_teams():
                 pm_teams_count += 1
                 break
 
-    notify_everybody()
+    notify_teams(get_teams())
     notify_free_students(get_unallocated_students())
     return "Распределение успешно"
 
@@ -104,10 +102,10 @@ def get_teams(start_date=datetime.now()):
         if not team_project.timeslots.all().exists():
             continue
 
-        pm_timeslot = team_project.timeslots.filter(
+        pm_timeslots = team_project.timeslots.filter(
             participant__role=Participant.PRODUCT_MANAGER
         )
-        if not pm_timeslot.exists():
+        if not pm_timeslots.exists():
             continue
 
         students_timeslots = team_project.timeslots.filter(
@@ -115,8 +113,8 @@ def get_teams(start_date=datetime.now()):
         )
         teams.append(
             {
-                "pm_timeslot": pm_timeslot,
-                "pm": pm_timeslot[0].participant,
+                "pm_timeslot": pm_timeslots.first(),
+                "pm": pm_timeslots.first().participant,
                 "students_timeslots": students_timeslots,
                 "students": Participant.objects.filter(
                     role=Participant.STUDENT, timeslots__in=students_timeslots
@@ -144,23 +142,7 @@ def cancel_distribution(start_date=datetime.now()):
 
 
 def get_unallocated_students():
-    """Выборка нераспределенных по ПМам и группам учеников."""
-
-    students = Participant.objects.filter(role=Participant.STUDENT)
-    unallocated_students = []
-    for student in students:
-        # исключая прошедшие проекты
-        actual_student_timeslots = student.timeslots.exclude(
-            team_project__date_end__lte=datetime.now()
-        ).values("team_project")
-
-        if all(item["team_project"] is None for item in actual_student_timeslots):
-            unallocated_students.append(student)
-
-    return unallocated_students
-
-
-def get_unallocated_students_optimized():
+    """Нераспределенные по командам ученики."""
     slots_with_actual_project = TimeSlot.objects.filter(
         team_project__isnull=False,
         team_project__date_start__gte=datetime.now(),
